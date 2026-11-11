@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ваш Сервіс Mini App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap">
+<style>
+/* Layout: presenter panel on the left, phone mockup on the right; Monobank-style dark app with a lime accent (single dark look by request) */
+:root{
+  color-scheme:dark;
+  --page:#0A0B09; --bg:#0F110D; --s1:#181A15; --s2:#20231C; --s3:#2B2F26; --line:#262A21;
+  --fg:#F0F3EA; --mut:#8D9483; --dim:#5D6356;
+  --acc:#B5F23D; --acc-ink:#11150A; --acc-soft:rgba(181,242,61,.12);
+  --red:#FF5C4D; --red-soft:rgba(255,92,77,.14);
+  --amb:#FFB13B; --amb-soft:rgba(255,177,59,.14);
+  --ok:#5BD08D; --ok-soft:rgba(91,208,141,.12);
+  --tg:#2AABEE; --plate:#F4F4F0; --plate-ink:#111; --ua:#1F5BD6;
+  --f-d:'Unbounded','Arial Black',system-ui,sans-serif;
+  --f-b:'Onest',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{background:var(--page);color:var(--fg)}
+body{font-family:var(--f-b);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+.wrap{display:grid;grid-template-columns:minmax(0,360px) auto;gap:56px;justify-content:center;align-items:start;max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:40px}
+
+/* presenter panel */
+.side{display:flex;flex-direction:column;gap:22px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px)}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);font-weight:600}
+.side h1{font-family:var(--f-d);font-size:34px;line-height:1.05;margin:6px 0 10px;font-weight:700;letter-spacing:-.01em}
+.side p{margin:0;color:var(--mut);line-height:1.5}
+.scen{background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.scen h3{margin:0;font-size:15px;font-weight:600}
+.scen ol{margin:0;padding-left:18px;color:var(--mut);display:flex;flex-direction:column;gap:6px;line-height:1.45}
+.scen ol b{color:var(--fg);font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:14px;padding:0 18px;font-weight:600;background:var(--acc);color:var(--acc-ink)}
+.btn.ghost{background:var(--s2);color:var(--fg)}
+.btn.full{width:100%}
+.btn svg{width:18px;height:18px}
+.screens{display:flex;flex-direction:column;gap:2px}
+.screens button{display:grid;grid-template-columns:26px 1fr;gap:2px 10px;text-align:left;padding:9px 10px;border-radius:12px}
+.screens button:hover{background:var(--s1)}
+.screens button.on{background:var(--s2)}
+.screens .n{grid-row:span 2;font-family:var(--f-d);font-size:12px;color:var(--dim);padding-top:2px}
+.screens button.on .n{color:var(--acc)}
+.screens b{font-weight:600}
+.screens small{color:var(--mut);font-size:12.5px;line-height:1.35}
+.foot{font-size:12px;color:var(--dim);line-height:1.5}
+
+/* phone */
+.stage{display:flex;justify-content:center}
+.phone{width:390px;max-width:100%;height:820px;border-radius:52px;border:10px solid #1C1E1A;box-shadow:0 0 0 1px #2c2f28,0 40px 80px -20px rgba(0,0,0,.7);background:var(--bg);overflow:hidden;position:relative}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column}
+.tgbar{flex:none;height:52px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px 0;font-size:14px}
+.tgbar .cl{color:var(--tg);font-weight:500}
+.tgbar .mid{text-align:center;line-height:1.15}
+.tgbar .mid b{display:block;font-weight:600;font-size:14px}
+.tgbar .mid small{color:var(--mut);font-size:11px}
+.tgbar .dots3{color:var(--tg);font-size:20px;letter-spacing:1px;line-height:1}
+#view{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 16px 28px;scrollbar-width:none}
+#view::-webkit-scrollbar{display:none}
+
+/* tab bar */
+.tabs{flex:none;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;padding:8px 6px 18px;border-top:1px solid var(--line);background:rgba(15,17,13,.96)}
+.tabs button{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;color:var(--dim)}
+.tabs button svg{width:22px;height:22px}
+.tabs button.on{color:var(--fg)}
+.tabs .mid-b span{width:48px;height:48px;border-radius:16px;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;margin-top:-18px;box-shadow:0 8px 20px -6px rgba(181,242,61,.45)}
+.tabs .mid-b svg{width:24px;height:24px}
+
+svg.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* common */
+.top{display:flex;align-items:center;justify-content:space-between;margin:6px 0 16px}
+.top h2{font-family:var(--f-d);font-size:20px;font-weight:600;margin:0}
+.hello{display:flex;align-items:center;gap:10px}
+.ava{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#3a4a1c,#22281a);display:grid;place-items:center;font-weight:700;color:var(--acc)}
+.hello small{display:block;color:var(--mut);font-size:12px}
+.hello b{font-size:16px;font-weight:600}
+.icobtn{width:40px;height:40px;border-radius:50%;background:var(--s1);display:grid;place-items:center;position:relative}
+.icobtn svg{width:20px;height:20px}
+.icobtn .bd{position:absolute;top:8px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid var(--s1)}
+.sec{display:flex;align-items:baseline;justify-content:space-between;margin:22px 2px 10px}
+.sec h3{margin:0;font-size:16px;font-weight:600}
+.sec button{color:var(--acc);font-size:13px;font-weight:500}
+.card{background:var(--s1);border-radius:20px;padding:14px}
+.muted{color:var(--mut)}
+
+/* car cards */
+.cars{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 16px;scrollbar-width:none}
+.cars::-webkit-scrollbar{display:none}
+.car{flex:0 0 calc(100% - 22px);scroll-snap-align:center;border-radius:26px;padding:18px;min-height:206px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
+.car.c1{background:radial-gradient(120% 90% at 100% 0%,rgba(181,242,61,.32),transparent 55%),linear-gradient(150deg,#2a3514,#141809 70%)}
+.car.c2{background:radial-gradient(120% 90% at 100% 0%,rgba(140,160,190,.28),transparent 55%),linear-gradient(150deg,#2a2e35,#14161a 70%)}
+.car.add{background:transparent;border:1.5px dashed var(--s3);align-items:center;justify-content:center;gap:10px;color:var(--mut)}
+.car.add span{width:52px;height:52px;border-radius:50%;background:var(--s1);display:grid;place-items:center;color:var(--acc)}
+.car.add svg{width:24px;height:24px}
+.car .sil{position:absolute;right:-18px;bottom:44px;width:230px;opacity:.09;fill:#fff}
+.car-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.car-h b{font-family:var(--f-d);font-size:17px;font-weight:600;display:block}
+.car-h small{color:rgba(240,243,234,.6);font-size:12px}
+.ring{position:relative;width:58px;height:58px;flex:none}
+.ring svg{width:58px;height:58px;transform:rotate(-90deg)}
+.ring span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-d);font-size:13px;font-weight:600}
+.km{font-family:var(--f-d);font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1;margin-top:8px}
+.km small{font-size:14px;font-weight:500;color:rgba(240,243,234,.6);margin-left:4px;letter-spacing:0}
+.km-l{font-size:12px;color:rgba(240,243,234,.6);margin-top:4px}
+.car-f{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:14px}
+.plate{display:inline-flex;align-items:stretch;height:24px;border-radius:5px;overflow:hidden;background:var(--plate);color:var(--plate-ink);font-weight:700;font-size:13px;letter-spacing:.06em;border:1px solid #000}
+.plate i{font-style:normal;background:var(--ua);color:#fff;font-size:8px;display:flex;flex-direction:column;justify-content:flex-end;padding:0 3px 2px;letter-spacing:0}
+.plate span{padding:0 7px;display:flex;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:12px;font-size:11.5px;font-weight:500;background:rgba(0,0,0,.35);color:var(--fg)}
+.chip .pl{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 3px rgba(181,242,61,.2)}
+.pager{display:flex;justify-content:center;gap:6px;margin:12px 0 4px}
+.pager button{width:6px;height:6px;border-radius:3px;background:var(--s3);transition:width .2s}
+.pager button.on{width:18px;background:var(--fg)}
+
+/* quick actions */
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.qa button{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11.5px;color:var(--mut)}
+.qa span{width:52px;height:52px;border-radius:50%;background:var(--s1);display:grid;place-items:center;color:var(--fg)}
+.qa button:first-child span{background:var(--acc);color:var(--acc-ink)}
+.qa svg{width:22px;height:22px}
+
+.kmrow{display:flex;align-items:center;gap:12px;margin-top:16px}
+.kmrow .ic{width:38px;height:38px;border-radius:12px;background:var(--s2);display:grid;place-items:center;color:var(--acc);flex:none}
+.kmrow .ic svg{width:20px;height:20px}
+.kmrow div{flex:1;min-width:0}
+.kmrow b{display:block;font-weight:600;font-size:13.5px}
+.kmrow small{color:var(--mut);font-size:12px}
+.btn-sm{height:34px;padding:0 14px;border-radius:11px;background:var(--s2);font-weight:600;font-size:13px}
+.btn-sm.acc{background:var(--acc);color:var(--acc-ink)}
+
+/* unit rows */
+.ulist{display:flex;flex-direction:column;gap:8px}
+.u{background:var(--s1);border-radius:18px;padding:13px 14px;display:flex;flex-direction:column;gap:9px}
+.u-top{display:grid;grid-template-columns:10px 1fr auto;gap:10px;align-items:center}
+.u .dot{width:10px;height:10px;border-radius:50%;background:var(--ok)}
+.u.amb .dot{background:var(--amb)} .u.red .dot{background:var(--red)}
+.u-n{font-weight:600;font-size:14px;min-width:0}
+.u-l{font-size:12.5px;font-weight:600;padding:4px 8px;border-radius:8px;background:var(--ok-soft);color:var(--ok);white-space:nowrap}
+.u.amb .u-l{background:var(--amb-soft);color:var(--amb)}
+.u.red .u-l{background:var(--red-soft);color:var(--red)}
+.bar{height:4px;border-radius:2px;background:var(--s3);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:2px}
+.u.amb .bar i{background:var(--amb)} .u.red .bar i{background:var(--red)}
+.u-sub{font-size:12px;color:var(--mut)}
+.u-note{font-size:12.5px;color:var(--fg);background:var(--s2);border-radius:10px;padding:8px 10px;line-height:1.4}
+.tag{font-style:normal;display:inline-block;margin-left:6px;font-size:10.5px;font-weight:600;color:var(--amb);border:1px solid rgba(255,177,59,.4);border-radius:6px;padding:1px 5px;vertical-align:1px}
+.u-btn{align-self:flex-start;height:32px;padding:0 13px;border-radius:10px;background:var(--acc);color:var(--acc-ink);font-weight:600;font-size:12.5px}
+
+/* summary chips */
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.sum div{background:var(--s1);border-radius:16px;padding:12px}
+.sum b{font-family:var(--f-d);font-size:22px;font-weight:600;display:block}
+.sum small{font-size:11.5px;color:var(--mut)}
+.sum .r b{color:var(--red)} .sum .a b{color:var(--amb)} .sum .o b{color:var(--ok)}
+.grp{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:600;margin:16px 2px 8px}
+
+.seg{display:flex;gap:6px;background:var(--s1);padding:4px;border-radius:14px;margin-bottom:14px}
+.seg button{flex:1;height:34px;border-radius:10px;font-weight:600;font-size:13px;color:var(--mut)}
+.seg button.on{background:var(--s3);color:var(--fg)}
+
+/* history */
+.tl{display:flex;flex-direction:column;gap:10px}
+.visit{background:var(--s1);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.v-h{display:flex;justify-content:space-between;gap:10px}
+.v-h b{font-weight:600}
+.v-h small{display:block;color:var(--mut);font-size:12px}
+.v-sum{font-family:var(--f-d);font-weight:600;font-size:15px;white-space:nowrap}
+.v-w{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.v-w div{display:flex;gap:8px;align-items:center;font-size:13px}
+.v-w svg{width:16px;height:16px;color:var(--acc);flex:none}
+.v-def{font-size:12.5px;color:var(--amb);background:var(--amb-soft);border-radius:10px;padding:8px 10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.stats div{background:var(--s1);border-radius:16px;padding:12px}
+.stats b{font-family:var(--f-d);font-size:16px;font-weight:600;display:block}
+.stats small{font-size:11.5px;color:var(--mut)}
+.spec{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;margin-top:2px}
+.spec span{color:var(--mut)}
+
+/* booking */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{height:36px;padding:0 14px;border-radius:12px;background:var(--s1);font-weight:500;font-size:13px}
+.chips button.on{background:var(--acc);color:var(--acc-ink);font-weight:600}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;align-items:center;gap:12px;background:var(--s1);border-radius:16px;padding:12px 14px;text-align:left;width:100%;border:1.5px solid transparent}
+.opt.on{border-color:var(--acc)}
+.opt .rd{width:20px;height:20px;border-radius:50%;border:2px solid var(--s3);flex:none;display:grid;place-items:center}
+.opt.on .rd{border-color:var(--acc)}
+.opt.on .rd::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--acc)}
+.opt div{flex:1;min-width:0}
+.opt b{display:block;font-weight:600;font-size:13.5px}
+.opt small{color:var(--mut);font-size:12px}
+.opt .pr{font-weight:600;font-size:13px;color:var(--mut);white-space:nowrap}
+.days{display:flex;gap:6px;overflow-x:auto;margin:0 -16px;padding:0 16px;scrollbar-width:none}
+.days::-webkit-scrollbar{display:none}
+.days button{flex:0 0 54px;height:66px;border-radius:16px;background:var(--s1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.days small{font-size:11px;color:var(--mut);text-transform:lowercase}
+.days b{font-family:var(--f-d);font-size:17px;font-weight:600}
+.days button.on{background:var(--acc);color:var(--acc-ink)}
+.days button.on small{color:var(--acc-ink)}
+.times{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.times button{height:40px;border-radius:12px;background:var(--s1);font-weight:600;font-size:13px}
+.times button.on{background:var(--acc);color:var(--acc-ink)}
+.times button:disabled{color:var(--dim);text-decoration:line-through;cursor:default}
+.total{display:flex;justify-content:space-between;align-items:center;margin:20px 2px 12px}
+.total b{font-family:var(--f-d);font-size:20px;font-weight:600}
+.done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding-top:40px}
+.done .ck{width:84px;height:84px;border-radius:50%;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center}
+.done .ck svg{width:40px;height:40px;stroke-width:2.6}
+.done h2{font-family:var(--f-d);font-size:22px;margin:8px 0 0;font-weight:600;text-wrap:balance}
+.done .card{width:100%;text-align:left;display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.done .card div{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}
+.done .card span{color:var(--mut)}
+.tgnote{display:flex;gap:10px;align-items:center;background:rgba(42,171,238,.12);color:#8fd3f7;border-radius:14px;padding:12px;font-size:13px;text-align:left;width:100%}
+.tgnote svg{width:20px;height:20px;fill:var(--tg);flex:none}
+
+/* bonus */
+.bcard{border-radius:26px;padding:20px;background:radial-gradient(100% 120% at 0% 0%,#d6ff7a,var(--acc) 45%,#8fd11c);color:var(--acc-ink);display:flex;flex-direction:column;gap:6px}
+.bcard small{font-weight:500;opacity:.75}
+.bcard .bal{font-family:var(--f-d);font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1.05}
+.bcard .lv{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;margin-top:10px}
+.bcard .lb{height:6px;border-radius:3px;background:rgba(17,21,10,.18);overflow:hidden}
+.bcard .lb i{display:block;height:100%;width:58%;background:var(--acc-ink);border-radius:3px}
+.ref{display:flex;gap:12px;align-items:center}
+.ref .ic{width:44px;height:44px;border-radius:14px;background:var(--acc-soft);color:var(--acc);display:grid;place-items:center;flex:none}
+.ref .ic svg{width:22px;height:22px}
+.ref div{flex:1;min-width:0}
+.ref b{display:block;font-weight:600}
+.ref small{color:var(--mut);font-size:12px}
+.code{font-family:var(--f-d);font-size:12px;background:var(--s2);border-radius:9px;padding:7px 10px;letter-spacing:.05em}
+.hist{display:flex;flex-direction:column}
+.hist div{display:flex;justify-content:space-between;gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}
+.hist div:last-child{border:0}
+.hist b{font-weight:500;font-size:13.5px;display:block}
+.hist small{color:var(--mut);font-size:12px}
+.hist .pl{color:var(--acc);font-weight:600;white-space:nowrap}
+.hist .mn{color:var(--fg);font-weight:600;white-space:nowrap}
+
+/* profile */
+.prof{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.prof .ava{width:58px;height:58px;font-size:20px}
+.prof b{font-size:18px;font-weight:600;display:block}
+.prof small{color:var(--mut)}
+.rows{background:var(--s1);border-radius:18px;padding:0 14px}
+.row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.row:last-child{border:0}
+.row div{flex:1;min-width:0}
+.row b{display:block;font-weight:500;font-size:14px}
+.row small{color:var(--mut);font-size:12px}
+.row .val{color:var(--mut);font-size:13px}
+.tg-sw{width:44px;height:26px;border-radius:13px;background:var(--s3);position:relative;flex:none;transition:background .15s}
+.tg-sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s}
+.tg-sw.on{background:var(--acc)}
+.tg-sw.on::after{transform:translateX(18px);background:var(--acc-ink)}
+
+/* onboarding + add */
+.onb{display:flex;flex-direction:column;min-height:100%;gap:18px;padding-top:18px}
+.logo{width:64px;height:64px;border-radius:20px;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center}
+.logo svg{width:34px;height:34px;stroke-width:2.2}
+.onb h1{font-family:var(--f-d);font-size:30px;line-height:1.08;margin:0;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.onb p{margin:0;color:var(--mut);line-height:1.5}
+.feat{display:flex;flex-direction:column;gap:10px}
+.feat div{display:flex;gap:12px;align-items:center;background:var(--s1);border-radius:16px;padding:12px}
+.feat span{width:38px;height:38px;border-radius:12px;background:var(--acc-soft);color:var(--acc);display:grid;place-items:center;flex:none}
+.feat svg{width:20px;height:20px}
+.feat b{display:block;font-weight:600;font-size:13.5px}
+.feat small{color:var(--mut);font-size:12px}
+.btn.tg{background:var(--tg);color:#fff}
+.btn.tg svg{fill:#fff}
+.alt{text-align:center;color:var(--mut);font-size:13px}
+.steps{display:flex;gap:6px;margin:4px 0 14px}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--s3)}
+.steps i.on{background:var(--acc)}
+.field{background:var(--s1);border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;gap:2px}
+.field label{font-size:11.5px;color:var(--mut)}
+.field input,.field .fv{background:none;border:0;color:var(--fg);font:inherit;font-size:15px;font-weight:600;padding:0;width:100%}
+.field input:focus{outline:none}
+.fields{display:flex;flex-direction:column;gap:8px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.found{background:var(--acc-soft);border:1px solid rgba(181,242,61,.3);border-radius:18px;padding:14px;margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.found b{color:var(--acc);font-weight:600}
+.found ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px;font-size:13px}
+.found li{display:flex;justify-content:space-between;gap:10px}
+.found li span{color:var(--mut)}
+
+/* push + sheet */
+.push{position:absolute;left:10px;right:10px;top:10px;z-index:20;background:rgba(40,43,36,.97);backdrop-filter:blur(12px);border-radius:20px;padding:12px;display:flex;gap:10px;box-shadow:0 16px 40px rgba(0,0,0,.5);transform:translateY(-130%);transition:transform .35s cubic-bezier(.2,.9,.3,1.2);text-align:left;width:auto}
+.push.show{transform:none}
+.push .p-ic{width:38px;height:38px;border-radius:11px;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;flex:none}
+.push .p-ic svg{width:20px;height:20px;stroke-width:2.2}
+.push .p-h{display:flex;justify-content:space-between;font-size:12px;color:var(--mut)}
+.push .p-h b{color:var(--fg);font-weight:600}
+.push .p-t{font-weight:600;font-size:13.5px;margin-top:1px}
+.push .p-b{font-size:13px;color:#cfd4c8;line-height:1.35}
+.push>div:last-child{flex:1;min-width:0}
+.sheet-wrap{position:absolute;inset:0;z-index:15;background:rgba(0,0,0,.55);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--s1);border-radius:28px 28px 0 0;padding:10px 18px 26px;display:flex;flex-direction:column;gap:14px;animation:up .3s ease}
+@keyframes up{from{transform:translateY(100%)}}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--s3);align-self:center}
+.sheet h3{font-family:var(--f-d);font-size:18px;margin:4px 0 0;font-weight:600}
+.odo{background:var(--bg);border-radius:18px;padding:16px;display:flex;align-items:baseline;gap:8px;border:1.5px solid var(--acc)}
+.odo input{background:none;border:0;color:var(--fg);font-family:var(--f-d);font-size:30px;font-weight:600;width:100%;min-width:0;padding:0}
+.odo input:focus{outline:none}
+.odo span{color:var(--mut);font-weight:600}
+.hint{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--acc)}
+.hint svg{width:16px;height:16px;flex:none}
+
+@media (max-width:860px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:24px;padding-block:20px}
+  .side{position:static}
+  .side h1{font-size:28px}
+  .screens{flex-direction:row;overflow-x:auto;gap:6px;margin:0 -16px;padding:0 16px;scrollbar-width:none}
+  .screens button{grid-template-columns:auto;flex:none;background:var(--s1);padding:8px 12px}
+  .screens small,.screens .n{display:none}
+  .side .scen{order:3}
+  .foot{order:4}
+}
+@media (max-width:440px){
+  .phone{border-width:6px;border-radius:38px;height:780px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <aside class="side">
+    <div>
+      <div class="eyebrow">Прототип · PWA + Telegram Mini App</div>
+      <h1>Ваш Сервіс</h1>
+      <p>Застосунок для мережі СТО. Клієнт бачить, що і коли міняти у своєму авто, а сервіс отримує повторні візити без оплати за рекламу. Назва, логотип і кольори підставляються під бренд мережі.</p>
+    </div>
+    <nav class="screens" id="screens"></nav>
+    <div class="scen">
+      <h3>Як застосунок повертає клієнта</h3>
+      <ol>
+        <li><b>Раз на 2 місяці пуш:</b> «оновіть пробіг», за це +100 ₴ бонусами.</li>
+        <li><b>Клієнт вводить пробіг.</b> Регламент перераховується, дані йдуть у CRM.</li>
+        <li><b>Другий пуш:</b> «час міняти оливу, є вікно завтра о 10:00». Запис в один тап.</li>
+      </ol>
+      <button class="btn full" onclick="runScenario()">Програти сценарій</button>
+    </div>
+    <div class="foot">Дані демонстраційні. OBD-датчик показано підключеним для прикладу. Регламенти ТО підтягуються за маркою, моделлю та двигуном.</div>
+  </aside>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="scr">
+        <div class="tgbar"><button class="cl">Закрити</button><div class="mid"><b>Ваш Сервіс</b><small>міні-застосунок</small></div><span class="dots3">···</span></div>
+        <div id="view"></div>
+        <nav class="tabs" id="tabs"></nav>
+      </div>
+      <button class="push" id="push"><div class="p-ic"></div><div><div class="p-h"><b>Ваш Сервіс</b><span>зараз</span></div><div class="p-t" id="pt"></div><div class="p-b" id="pb"></div></div></button>
+      <div class="sheet-wrap" id="sheet" hidden></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const I={
+ home:'<path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/>',
+ list:'<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>',
+ cal:'<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+ hist:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+ gift:'<rect x="4" y="9" width="16" height="11" rx="2"/><path d="M3 9h18M12 9v11M12 9C10 5 6 5 6 7.5S9 9 12 9zm0 0c2-4 6-4 6-1.5S15 9 12 9z"/>',
+ gauge:'<path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="M12 13.5l4-4"/>',
+ bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ chev:'<path d="M9 6l6 6-6 6"/>',
+ wrench:'<path d="M14.5 6.5a4 4 0 0 0-5 5L4 17l3 3 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-2.5z"/>',
+ check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+ obd:'<path d="M5 12a7 7 0 0 1 14 0M8.5 12a3.5 3.5 0 0 1 7 0"/><circle cx="12" cy="15.5" r="1.4"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/>',
+ car:'<path d="M5 16v-4l2-5h10l2 5v4M3 16h18v3h-3M6 19H3M7.5 13.5h.01M16.5 13.5h.01"/>',
+ users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.5-5 6.5-5s5.7 1.5 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.2 3.5 5"/>'
+};
+const ic=(n,c='')=>`<svg class="i ${c}" viewBox="0 0 24 24">${I[n]}</svg>`;
+const tgPlane='<svg viewBox="0 0 24 24"><path d="M21.5 4.2L2.8 11.4c-.9.4-.9 1.6.1 1.9l4.6 1.4 1.8 5.6c.2.7 1.1.9 1.6.4l2.6-2.4 4.8 3.5c.6.4 1.4.1 1.6-.6L23 5.4c.2-.9-.7-1.6-1.5-1.2zM9.6 14.3l8.6-6.9-6.7 7.8-.3 3z"/></svg>';
+const SIL='<svg class="sil" viewBox="0 0 230 80"><path d="M8 58c0-8 6-12 16-14l34-5 26-17c6-4 14-6 24-6h42c10 0 18 4 24 10l17 15 17 4c8 2 10 6 10 12v4h-24a19 19 0 0 0-38 0H74a19 19 0 0 0-38 0H8z"/><circle cx="55" cy="62" r="14"/><circle cx="175" cy="62" r="14"/></svg>';
+
+const T=new Date(2026,9,2);
+const D=s=>new Date(s+'T00:00:00');
+const days=d=>Math.round((d-T)/864e5);
+const addM=(s,m)=>{const d=D(s);d.setMonth(d.getMonth()+m);return d};
+const nf=n=>Math.round(n).toLocaleString('uk-UA');
+const dm=d=>d.toLocaleDateString('uk-UA',{day:'numeric',month:'long'});
+const dmy=d=>d.toLocaleDateString('uk-UA',{day:'numeric',month:'short',year:'numeric'});
+
+const SV={oil:['Заміна оливи і фільтра',450],filters:['Заміна фільтрів',250],brakes:['Гальмівна система',400],timing:['ГРМ і ремені',3800],tires:['Шиномонтаж',600],chassis:['Ремонт ходової',500],ac:['Заправка кондиціонера',900],diag:['Комп’ютерна діагностика',350]};
+
+const cars=[
+ {make:'Skoda',model:'Octavia A7',eng:'1.8 TSI · DSG',year:2017,plate:'AA 1234 KX',vin:'TMBJ•••••••4821',km:148320,obd:true,upd:'12 хв тому',cls:'c1',
+  units:[
+   {n:'Моторна олива і фільтр',km:10000,mo:12,lk:139800,ld:'2026-01-15',svc:'oil'},
+   {n:'Салонний фільтр',km:15000,mo:12,lk:131200,ld:'2025-05-20',svc:'filters'},
+   {n:'Гальмівна рідина',mo:24,lk:118000,ld:'2024-09-10',svc:'brakes'},
+   {n:'Ланцюг ГРМ',km:150000,lk:0,ld:'2017-03-01',svc:'timing'},
+   {n:'Ремінь приводу агрегатів',km:90000,lk:61500,ld:'2020-04-12',svc:'timing'},
+   {n:'Акумулятор',mo:60,lk:96000,ld:'2021-11-05',svc:'diag'},
+   {n:'Зимові шини',due:'2026-11-01',note:'Сезонна заміна, рекомендуємо до перших заморозків',svc:'tires'},
+   {n:'Сайлентблоки передніх важелів',due:'2026-11-14',def:'Майстер, 14 вересня: «Ще походять, замінити протягом 2 місяців»',svc:'chassis'},
+   {n:'Гальмівні колодки передні',km:35000,lk:139800,ld:'2026-01-15',svc:'brakes'},
+   {n:'Олива в коробці DSG',km:60000,lk:101000,ld:'2022-02-02',svc:'oil'},
+   {n:'Повітряний фільтр',km:30000,mo:24,lk:146900,ld:'2026-09-14',svc:'filters'},
+   {n:'Свічки запалювання',km:60000,lk:118000,ld:'2024-09-10',svc:'diag'},
+   {n:'Кондиціонер: заправка',mo:24,lk:131200,ld:'2025-05-20',svc:'ac'},
+   {n:'Антифриз',km:120000,mo:60,lk:84000,ld:'2022-03-18',svc:'diag'}
+  ],
+  visits:[
+   {d:'2026-09-14',pt:'Позняки',km:146900,sum:1140,w:['Діагностика ходової, 173 пункти','Заміна повітряного фільтра'],def:'Відкладено: сайлентблоки передніх важелів, до 14 листопада'},
+   {d:'2026-01-15',pt:'Позняки',km:139800,sum:4380,w:['Заміна моторної оливи і фільтра','Заміна передніх гальмівних колодок']},
+   {d:'2025-05-20',pt:'Оболонь',km:131200,sum:1650,w:['Заправка кондиціонера','Заміна салонного фільтра']},
+   {d:'2024-09-10',pt:'Позняки',km:118000,sum:2920,w:['Заміна гальмівної рідини','Заміна свічок запалювання']}
+  ]},
+ {make:'Toyota',model:'RAV4',eng:'2.0 · варіатор',year:2019,plate:'KA 7781 IB',vin:'JTMW•••••••0317',km:87540,obd:false,upd:'47 днів тому',cls:'c2',
+  units:[
+   {n:'Моторна олива і фільтр',km:10000,mo:12,lk:82000,ld:'2026-03-20',svc:'oil'},
+   {n:'Салонний фільтр',km:15000,mo:12,lk:82000,ld:'2026-03-20',svc:'filters'},
+   {n:'Гальмівна рідина',mo:24,lk:70000,ld:'2025-02-11',svc:'brakes'},
+   {n:'Гальмівні колодки передні',km:40000,lk:61000,ld:'2024-06-01',svc:'brakes'},
+   {n:'Свічки запалювання',km:100000,lk:0,ld:'2019-05-01',svc:'diag'},
+   {n:'Рідина варіатора',km:60000,lk:60200,ld:'2024-03-15',svc:'oil'},
+   {n:'Зимові шини',due:'2026-11-01',note:'Сезонна заміна, рекомендуємо до перших заморозків',svc:'tires'},
+   {n:'Кондиціонер: заправка',mo:24,lk:61000,ld:'2024-06-01',svc:'ac'},
+   {n:'Антифриз',km:160000,mo:120,lk:0,ld:'2019-05-01',svc:'diag'}
+  ],
+  visits:[
+   {d:'2026-03-20',pt:'Теремки',km:82000,sum:2760,w:['Заміна моторної оливи і фільтра','Заміна салонного фільтра','Перевзування на літні шини']},
+   {d:'2024-06-01',pt:'Теремки',km:61000,sum:3480,w:['Заміна передніх гальмівних колодок','Заправка кондиціонера']}
+  ]}
+];
+
+function ev(u,c){
+  let b=null;const put=o=>{if(!b||o.f<b.f)b=o};
+  if(u.km){const r=u.lk+u.km-c.km;put({f:r/u.km,k:'km',r})}
+  if(u.mo){const d=addM(u.ld,u.mo),r=days(d);put({f:r/(u.mo*30.44),k:'d',r,d})}
+  if(u.due){const d=D(u.due),r=days(d);put({f:r<0?-1:r<=45?.08:.6,k:'due',r,d})}
+  const r=b.r;let lab;
+  if(b.k==='km')lab=r<0?`прострочено ${nf(-r)} км`:`через ${nf(r)} км`;
+  else if(b.k==='due')lab=r<0?'прострочено':`до ${dm(b.d)}`;
+  else lab=r<0?`прострочено ${-r<60?-r+' дн.':Math.round(-r/30.44)+' міс.'}`:r<60?`через ${r} дн.`:`через ${Math.round(r/30.44)} міс.`;
+  const st=b.f<0?'red':b.f<.2?'amb':'ok';
+  let sub;
+  if(u.due)sub=u.note||'Рекомендація майстра';
+  else{const iv=[u.km?`${nf(u.km)} км`:'',u.mo?`${u.mo} міс.`:''].filter(Boolean).join(' або ');
+       sub=`Кожні ${iv} · востаннє ${u.lk===0?'з заводу':nf(u.lk)+' км, '+dmy(D(u.ld))}`}
+  return {...u,f:b.f,st,lab,p:Math.min(1,Math.max(.04,1-b.f)),sub};
+}
+const evAll=c=>c.units.map(u=>ev(u,c)).sort((a,b)=>a.f-b.f);
+const health=c=>{const e=c.units.map(u=>ev(u,c));return Math.round(e.reduce((s,x)=>s+Math.min(1,Math.max(0,x.f)/.5),0)/e.length*100)};
+
+const S={screen:'home',car:0,bonus:1240,
+  bh:[['+186 ₴','Кешбек 5% за візит','14 вересня, Позняки'],['−300 ₴','Списано при оплаті','14 вересня, Позняки'],['+300 ₴','Друг Олег встановив застосунок','2 серпня'],['+100 ₴','Оновлення пробігу','28 липня'],['+219 ₴','Кешбек 5% за візит','15 січня, Позняки']],
+  book:{city:'Київ',pt:0,sel:new Set(['oil']),day:1,time:'11:30',done:false},
+  nt:{to:true,km:true,se:true,pr:false}};
+
+const SCREENS=[
+ ['onb','Вхід','Через Telegram в один тап, без паролів'],
+ ['add','Додати авто','Марка, модель, двигун і пробіг. Регламент ТО підтягується сам'],
+ ['home','Головна','Картки авто свайпом, стан авто, що потрібно зараз'],
+ ['regl','Регламент','Усі вузли: що зараз, що через 3 000 км, що через рік'],
+ ['garage','Мій гараж','Історія візитів: що міняли, на якому пробігу, сума'],
+ ['book','Запис','Місто, СТО, послуга, дата і час. Підтвердження в Telegram'],
+ ['bonus','Бонуси','Баланс, кешбек, списання, запрошення друзів'],
+ ['prof','Профіль','Сповіщення, OBD-датчик, мої дані']
+];
+
+/* ---------- views ---------- */
+function ring(h){const C=2*Math.PI*24,col=h<30?'var(--red)':h<55?'var(--amb)':'var(--acc)';
+  return `<div class="ring"><svg viewBox="0 0 58 58"><circle cx="29" cy="29" r="24" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/><circle cx="29" cy="29" r="24" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C*h/100} ${C}"/></svg><span class="num">${h}%</span></div>`}
+const plate=p=>`<span class="plate"><i>UA</i><span>${p}</span></span>`;
+
+function carCard(c,i){return `<div class="car ${c.cls}">${SIL}
+  <div class="car-h"><div><b>${c.make} ${c.model}</b><small>${c.eng} · ${c.year}</small></div>${ring(health(c))}</div>
+  <div><div class="km num">${nf(c.km)}<small>км</small></div><div class="km-l">Стан авто ${health(c)}% · ${evAll(c).filter(x=>x.st!=='ok').length} робіт потребують уваги</div></div>
+  <div class="car-f">${plate(c.plate)}<span class="chip">${c.obd?'<i class="pl"></i>OBD підключено':'Пробіг вручну'}</span></div></div>`}
+
+function urow(x){return `<div class="u ${x.st}">
+  <div class="u-top"><span class="dot"></span><div class="u-n">${x.n}${x.def?'<em class="tag">відкладено</em>':''}</div><div class="u-l num">${x.lab}</div></div>
+  <div class="bar"><i style="width:${x.p*100}%"></i></div>
+  <div class="u-sub num">${x.sub}</div>
+  ${x.def?`<div class="u-note">${x.def}</div>`:''}
+  ${x.st!=='ok'?`<button class="u-btn" onclick="bookFor('${x.svc}')">Записатись</button>`:''}</div>`}
+
+function feed(){const c=cars[S.car],e=evAll(c),urg=e.filter(x=>x.st!=='ok');
+ const last=c.visits[0];
+ return `<div class="qa">
+   <button onclick="bookFor()"><span>${ic('cal')}</span>Запис</button>
+   <button onclick="openKm(S.car)"><span>${ic('gauge')}</span>Пробіг</button>
+   <button onclick="go('regl')"><span>${ic('list')}</span>Регламент</button>
+   <button onclick="go('garage')"><span>${ic('hist')}</span>Історія</button></div>
+  <div class="kmrow"><span class="ic">${ic(c.obd?'obd':'gauge')}</span><div><b>Пробіг оновлено ${c.upd}</b><small>${c.obd?'OBD-датчик, автоматично':'Вручну. Нагадаємо через 2 місяці'}</small></div><button class="btn-sm${c.obd?'':' acc'}" onclick="openKm(S.car)">Оновити</button></div>
+  <div class="sec"><h3>Потребує уваги · ${urg.length}</h3><button onclick="go('regl')">Усі ${e.length}</button></div>
+  <div class="ulist">${urg.slice(0,4).map(urow).join('')}</div>
+  <div class="sec"><h3>Останній візит</h3><button onclick="go('garage')">Історія</button></div>
+  <div class="card" style="display:flex;gap:12px;align-items:center"><span class="ic" style="width:40px;height:40px;border-radius:12px;background:var(--s2);display:grid;place-items:center;color:var(--acc)">${ic('wrench')}</span><div style="flex:1;min-width:0"><b style="font-weight:600;display:block">${last.w[0]}</b><small class="muted num">${dmy(D(last.d))} · ${last.pt} · ${nf(last.km)} км</small></div><b class="num" style="font-family:var(--f-d);font-weight:600">${nf(last.sum)} ₴</b></div>
+  <div class="sec"><h3>Бонуси</h3><button onclick="go('bonus')">Детальніше</button></div>
+  <button class="card" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left" onclick="go('bonus')"><div><small class="muted">Можна списати до 30% чеку</small><b class="num" style="display:block;font-family:var(--f-d);font-size:22px;font-weight:600;color:var(--acc)">${nf(S.bonus)} ₴</b></div>${ic('chev')}</button>`}
+
+const V={};
+V.home=()=>`<div class="top"><button class="hello" onclick="go('prof')"><span class="ava">О</span><span style="text-align:left"><small>Добрий вечір</small><b>Олександр</b></span></button><button class="icobtn" onclick="runScenario()" aria-label="Сповіщення">${ic('bell')}<span class="bd"></span></button></div>
+ <div class="cars" id="cars">${cars.map(carCard).join('')}<button class="car add" onclick="go('add')"><span>${ic('plus')}</span>Додати авто</button></div>
+ <div class="pager" id="pager"></div>
+ <div id="feed">${feed()}</div>`;
+
+const seg=()=>`<div class="seg">${cars.map((c,i)=>`<button class="${i===S.car?'on':''}" onclick="S.car=${i};rv()">${c.make} ${c.model.split(' ')[0]}</button>`).join('')}</div>`;
+
+V.regl=()=>{const c=cars[S.car],e=evAll(c),cnt=k=>e.filter(x=>x.st===k).length;
+ const g=(k,t)=>{const l=e.filter(x=>x.st===k);return l.length?`<div class="grp">${t}</div><div class="ulist">${l.map(urow).join('')}</div>`:''};
+ return `<div class="top"><h2>Регламент ТО</h2><button class="btn-sm acc" onclick="openKm(S.car)">Пробіг</button></div>${seg()}
+ <div class="sum"><div class="r"><b class="num">${cnt('red')}</b><small>прострочено</small></div><div class="a"><b class="num">${cnt('amb')}</b><small>скоро</small></div><div class="o"><b class="num">${cnt('ok')}</b><small>в нормі</small></div></div>
+ <div class="card" style="font-size:12.5px;color:var(--mut)">Розраховано для ${c.make} ${c.model} ${c.eng} на пробігу <b class="num" style="color:var(--fg)">${nf(c.km)} км</b> за заводським регламентом. Що настане раніше: кілометри чи місяці.</div>
+ ${g('red','Прострочено')}${g('amb','Скоро')}${g('ok','В нормі')}`};
+
+V.garage=()=>{const c=cars[S.car],tot=c.visits.reduce((s,v)=>s+v.sum,0);
+ return `<div class="top"><h2>Мій гараж</h2><button class="icobtn" onclick="go('add')" aria-label="Додати авто">${ic('plus')}</button></div>${seg()}
+ <div class="card" style="margin-bottom:8px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-family:var(--f-d);font-weight:600">${c.make} ${c.model}</b>${plate(c.plate)}</div>
+ <div class="spec"><span>Двигун</span><b>${c.eng}</b><span>Рік</span><b>${c.year}</b><span>VIN</span><b class="num">${c.vin}</b><span>Пробіг</span><b class="num">${nf(c.km)} км</b></div></div>
+ <div class="stats"><div><b class="num">${c.visits.length}</b><small>візити</small></div><div><b class="num">${nf(tot)} ₴</b><small>за ремонт</small></div><div><b class="num">${D(c.visits[c.visits.length-1].d).getFullYear()}</b><small>з нами з</small></div></div>
+ <div class="sec"><h3>Історія обслуговування</h3></div>
+ <div class="tl">${c.visits.map(v=>`<div class="visit"><div class="v-h"><div><b>${dmy(D(v.d))}</b><small class="num">СТО ${v.pt} · ${nf(v.km)} км</small></div><span class="v-sum num">${nf(v.sum)} ₴</span></div>
+ <div class="v-w">${v.w.map(w=>`<div>${ic('check')}${w}</div>`).join('')}</div>${v.def?`<div class="v-def">${v.def}</div>`:''}</div>`).join('')}</div>`};
+
+const PTS={'Київ':[['Позняки','вул. Срібнокільська, 1','вільно сьогодні з 14:30'],['Оболонь','вул. Північна, 6','вільно завтра з 09:00'],['Теремки','просп. Глушкова, 40','вільно сьогодні з 16:00']],
+ 'Львів':[['Городоцька','вул. Городоцька, 180','вільно завтра з 10:00'],['Сихів','вул. Зубрівська, 9','вільно сьогодні з 15:30']],
+ 'Луцьк':[['Центр','вул. Рівненська, 76','вільно завтра з 09:30']],'Вінниця':[['Хмельницьке шосе','Хмельницьке шосе, 52','вільно сьогодні з 17:00']]};
+const TIMES=['09:00','10:00','11:30','13:00','14:30','16:00','17:30','19:00'],BUSY=['10:00','13:00'];
+function dayAt(i){const d=new Date(T);d.setDate(d.getDate()+i);return d}
+
+V.book=()=>{const b=S.book,c=cars[S.car];
+ if(b.done){const p=PTS[b.city][b.pt],d=dayAt(b.day);
+  return `<div class="done"><div class="ck">${ic('check')}</div><h2>Ви записані</h2><p class="muted" style="margin:0">Майстер уже бачить вашу історію та що потрібно зробити</p>
+  <div class="card"><div><span>Коли</span><b>${d.toLocaleDateString('uk-UA',{weekday:'long',day:'numeric',month:'long'})}, ${b.time}</b></div><div><span>Де</span><b>${p[0]}, ${p[1]}</b></div><div><span>Авто</span><b>${c.make} ${c.model}</b></div><div><span>Роботи</span><b style="text-align:right">${[...b.sel].map(s=>SV[s][0]).join(', ')}</b></div></div>
+  <div class="tgnote">${tgPlane}Підтвердження прийшло в Telegram. Нагадаємо за день і за 2 години до візиту.</div>
+  <button class="btn full" onclick="S.book.done=false;go('home')">На головну</button></div>`}
+ const tot=[...b.sel].reduce((s,k)=>s+SV[k][1],0);
+ return `<div class="top"><h2>Запис на сервіс</h2></div>${seg()}
+ <div class="sec" style="margin-top:4px"><h3>Місто</h3></div>
+ <div class="chips">${Object.keys(PTS).map(k=>`<button class="${k===b.city?'on':''}" onclick="S.book.city='${k}';S.book.pt=0;rv()">${k}</button>`).join('')}</div>
+ <div class="sec"><h3>СТО</h3></div>
+ <div class="opts">${PTS[b.city].map((p,i)=>`<button class="opt ${i===b.pt?'on':''}" onclick="S.book.pt=${i};rv()"><span class="rd"></span><div><b>${p[0]}</b><small>${p[1]} · ${p[2]}</small></div></button>`).join('')}</div>
+ <div class="sec"><h3>Що робимо</h3><small class="muted">з регламенту</small></div>
+ <div class="opts">${Object.keys(SV).map(k=>`<button class="opt ${b.sel.has(k)?'on':''}" onclick="tgSvc('${k}')"><span class="rd"></span><div><b>${SV[k][0]}</b></div><span class="pr num">від ${nf(SV[k][1])} ₴</span></button>`).join('')}</div>
+ <div class="sec"><h3>День</h3></div>
+ <div class="days">${[0,1,2,3,4,5,6].map(i=>{const d=dayAt(i);return `<button class="${i===b.day?'on':''}" onclick="S.book.day=${i};rv()"><small>${i===0?'сьог.':i===1?'завтра':d.toLocaleDateString('uk-UA',{weekday:'short'})}</small><b class="num">${d.getDate()}</b></button>`}).join('')}</div>
+ <div class="sec"><h3>Час</h3></div>
+ <div class="times">${TIMES.map(t=>`<button class="num ${t===b.time?'on':''}" ${BUSY.includes(t)?'disabled':''} onclick="S.book.time='${t}';rv()">${t}</button>`).join('')}</div>
+ <div class="total"><span class="muted">Орієнтовно</span><b class="num">від ${nf(tot)} ₴</b></div>
+ <button class="btn full" onclick="S.book.done=true;rv(true)">Записатись</button>`};
+
+V.bonus=()=>`<div class="top"><h2>Бонуси</h2></div>
+ <div class="bcard"><small>Ваш баланс</small><div class="bal num">${nf(S.bonus)} ₴</div><small>1 бонус = 1 гривня · списання до 30% чеку</small>
+ <div class="lv"><span>Срібний · кешбек 5%</span><span>Золотий · 7%</span></div><div class="lb"><i></i></div><small>Ще 6 800 ₴ ремонтів до Золотого рівня</small></div>
+ <div class="sec"><h3>Як заробити більше</h3></div>
+ <div class="card ref"><span class="ic">${ic('users')}</span><div><b>Запросіть друга</b><small>+300 ₴ вам і другу після першого візиту</small></div><span class="code">SASHA300</span></div>
+ <div class="card ref" style="margin-top:8px"><span class="ic">${ic('gauge')}</span><div><b>Оновлюйте пробіг</b><small>+100 ₴ щоразу, раз на 2 місяці</small></div><button class="btn-sm acc" onclick="openKm(S.car)">Оновити</button></div>
+ <div class="sec"><h3>Історія</h3></div>
+ <div class="hist">${S.bh.map(h=>`<div><span><b>${h[1]}</b><small>${h[2]}</small></span><span class="${h[0][0]==='+'?'pl':'mn'} num">${h[0]}</span></div>`).join('')}</div>`;
+
+const sw=(k,t,s)=>`<button class="row" onclick="S.nt.${k}=!S.nt.${k};rv()"><div><b>${t}</b><small>${s}</small></div><span class="tg-sw ${S.nt[k]?'on':''}"></span></button>`;
+V.prof=()=>`<div class="top"><h2>Профіль</h2></div>
+ <div class="prof"><span class="ava">О</span><div><b>Олександр Коваль</b><small class="num">+380 67 412 08 55 · Київ</small></div></div>
+ <div class="sec"><h3>Сповіщення</h3></div>
+ <div class="rows">${sw('to','Нагадування про ТО','Коли наближається заміна за регламентом')}${sw('km','Оновити пробіг','Раз на 2 місяці, якщо немає OBD')}${sw('se','Сезонні','Шини, кондиціонер, підготовка до зими')}${sw('pr','Акції мережі','Знижки та спецпропозиції')}</div>
+ <div class="sec"><h3>Пристрої</h3></div>
+ <div class="rows"><div class="row"><span style="color:var(--acc)">${ic('obd')}</span><div><b>OBD-датчик · Skoda Octavia</b><small>Підключено · пробіг і помилки двигуна</small></div><span class="val">${ic('chev')}</span></div>
+ <button class="row"><span style="color:var(--mut)">${ic('plus')}</span><div><b>Підключити датчик до RAV4</b><small>Встановлення на СТО за 15 хвилин</small></div></button></div>
+ <div class="sec"><h3>Мої дані</h3></div>
+ <div class="rows"><button class="row" onclick="go('garage')"><div><b>Мої авто</b></div><span class="val">${cars.length}</span></button><div class="row"><div><b>Улюблене СТО</b></div><span class="val">Позняки</span></div><div class="row"><div><b>Мова</b></div><span class="val">Українська</span></div></div>`;
+
+V.onb=()=>`<div class="onb"><div class="logo">${ic('gauge')}</div>
+ <h1>Ваше авто під контролем</h1><p>Історія ремонтів, нагадування про ТО і запис на сервіс в одному місці.</p>
+ <div class="feat"><div><span>${ic('list')}</span><span style="all:unset"><b>Знаємо регламент вашого авто</b><small>Що міняти зараз, а що через рік</small></span></div>
+ <div><span>${ic('bell')}</span><span style="all:unset"><b>Нагадаємо вчасно</b><small>Олива, ремені, шини, кондиціонер</small></span></div>
+ <div><span>${ic('gift')}</span><span style="all:unset"><b>+200 ₴ бонусами за реєстрацію</b><small>Списуйте до 30% чеку</small></span></div></div>
+ <div style="flex:1"></div>
+ <button class="btn tg full" onclick="go('add')">${tgPlane}Увійти через Telegram</button>
+ <div class="alt">або за номером телефону</div></div>`;
+
+V.add=()=>`<div class="top"><h2>Ваше авто</h2><button class="btn-sm" onclick="go('home')">Пропустити</button></div>
+ <div class="steps"><i class="on"></i><i class="on"></i><i></i></div>
+ <div class="fields">
+  <div class="f2"><div class="field"><label>Марка</label><div class="fv">Skoda</div></div><div class="field"><label>Модель</label><div class="fv">Octavia A7</div></div></div>
+  <div class="f2"><div class="field"><label>Рік</label><div class="fv num">2017</div></div><div class="field"><label>Двигун</label><div class="fv">1.8 TSI</div></div></div>
+  <div class="f2"><div class="field"><label>Коробка</label><div class="fv">DSG</div></div><div class="field"><label>Держномер</label><div class="fv">AA 1234 KX</div></div></div>
+  <div class="field"><label for="km0">Поточний пробіг, км</label><input id="km0" class="num" inputmode="numeric" value="148 320"></div>
+ </div>
+ <div class="found"><b>Знайдено регламент: 14 вузлів</b><ul>
+  <li>Моторна олива і фільтр<span class="num">10 000 км / 12 міс.</span></li>
+  <li>Ланцюг ГРМ<span class="num">150 000 км</span></li>
+  <li>Олива в коробці DSG<span class="num">60 000 км</span></li>
+  <li>Гальмівна рідина<span class="num">24 міс.</span></li>
+  <li>Свічки запалювання<span class="num">60 000 км</span></li></ul>
+  <small class="muted">Позначте, що вже міняли, або залиште, а майстер заповнить на першому візиті</small></div>
+ <button class="btn full" style="margin-top:16px" onclick="S.car=0;go('home')">Зберегти авто</button>`;
+
+/* ---------- engine ---------- */
+function rv(top){const v=$('#view'),st=v.scrollTop;v.innerHTML=V[S.screen]();v.scrollTop=top?0:st;if(S.screen==='home')initCars()}
+function go(s){S.screen=s;hideSheet();rv(true);tabs();side()}
+function tabs(){const t=$('#tabs');t.hidden=['onb','add'].includes(S.screen);
+ const b=(k,n,l)=>`<button class="${S.screen===k?'on':''}" onclick="go('${k}')">${ic(n)}${l}</button>`;
+ t.innerHTML=b('home','home','Головна')+b('regl','list','Регламент')+`<button class="mid-b ${S.screen==='book'?'on':''}" onclick="bookFor()"><span>${ic('cal')}</span>Запис</button>`+b('garage','car','Гараж')+b('bonus','gift','Бонуси')}
+function side(){$('#screens').innerHTML=SCREENS.map((s,i)=>`<button class="${S.screen===s[0]?'on':''}" onclick="go('${s[0]}')"><span class="n">${String(i+1).padStart(2,'0')}</span><b>${s[1]}</b><small>${s[2]}</small></button>`).join('')}
+function initCars(){const sc=$('#cars');if(!sc)return;const step=sc.children[0].offsetWidth+10;
+ sc.scrollLeft=S.car*step;pager();let tm;
+ sc.onscroll=()=>{clearTimeout(tm);tm=setTimeout(()=>{const i=Math.round(sc.scrollLeft/step);if(i<cars.length&&i!==S.car){S.car=i;$('#feed').innerHTML=feed();pager()}},70)}}
+function pager(){$('#pager').innerHTML=cars.map((c,i)=>`<button class="${i===S.car?'on':''}" aria-label="${c.make}" onclick="toCar(${i})"></button>`).join('')}
+function toCar(i){const sc=$('#cars');sc.scrollTo({left:i*(sc.children[0].offsetWidth+10),behavior:'smooth'})}
+function bookFor(svc){S.book.done=false;if(svc)S.book.sel=new Set([svc]);go('book')}
+function tgSvc(k){const s=S.book.sel;s.has(k)?s.size>1&&s.delete(k):s.add(k);rv()}
+
+let pt;
+function push(t,b,fn){const p=$('#push');p.querySelector('.p-ic').innerHTML=ic('gauge');$('#pt').textContent=t;$('#pb').textContent=b;
+ p.onclick=()=>{p.classList.remove('show');fn&&fn()};p.classList.add('show');clearTimeout(pt);pt=setTimeout(()=>p.classList.remove('show'),9000)}
+function hideSheet(){$('#sheet').hidden=true}
+function openKm(i){const c=cars[i],sh=$('#sheet');sh.hidden=false;
+ sh.innerHTML=`<div class="sheet"><span class="grab"></span><h3>Пробіг ${c.make} ${c.model}</h3><small class="muted">Подивіться на одометр і введіть значення. Ми перерахуємо, що потрібно замінити.</small>
+ <label class="odo"><input id="kmIn" class="num" inputmode="numeric" value="${i===1?'92 300':nf(c.km+1580)}" aria-label="Пробіг"><span>км</span></label>
+ <div class="hint">${ic('gift')}+100 ₴ бонусами за оновлення</div>
+ <button class="btn full" onclick="saveKm(${i})">Зберегти</button><button class="btn ghost full" onclick="hideSheet()">Скасувати</button></div>`;
+ sh.onclick=e=>{if(e.target===sh)hideSheet()}}
+function saveKm(i){const v=parseInt($('#kmIn').value.replace(/\D/g,''),10);const c=cars[i];
+ if(!v||v<c.km){$('#kmIn').style.color='var(--red)';return}
+ c.km=v;c.upd='щойно';S.bonus+=100;S.bh.unshift(['+100 ₴','Оновлення пробігу','сьогодні']);S.car=i;hideSheet();go('home');
+ const u=evAll(c)[0];
+ setTimeout(()=>push(`${c.make} ${c.model}: ${u.n.toLowerCase()}`,`${u.lab[0].toUpperCase()+u.lab.slice(1)}. Вільне вікно завтра о 11:30 на Позняках. Записатись?`,()=>{S.book.day=1;S.book.time='11:30';S.book.city='Київ';S.book.pt=0;bookFor(u.svc)}),1100)}
+function runScenario(){S.car=1;go('home');setTimeout(()=>push('Час оновити пробіг','Toyota RAV4: введіть пробіг, а ми покажемо, що варто замінити. +100 ₴ бонусами',()=>openKm(1)),500)}
+
+go('home');
+setTimeout(()=>{if(S.screen==='home')push('Час оновити пробіг','Toyota RAV4: введіть пробіг, а ми покажемо, що варто замінити. +100 ₴ бонусами',()=>{S.car=1;go('home');openKm(1)})},2500);
+</script>
+</body>
+</html>
